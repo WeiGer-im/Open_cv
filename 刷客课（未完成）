@@ -1,0 +1,117 @@
+import cv2 as cv
+import matplotlib.pyplot as plt
+import selenium
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
+import time
+import numpy as np
+import pytesseract
+from PIL import Image
+
+# 初始化浏览器
+wed = webdriver.Chrome(service=Service(r'C:\Program Files\Google\Chrome\Application\chromedriver.exe'))
+wed.get('https://changjiang.yuketang.cn/v2/web/xcloud/video-student/17285751/29635343')
+
+class Re_1:
+    def __init__(self):
+        self.Zhanghao = "19330382804"
+        self.Mima = "060104Lxy"
+
+    def DENGLU(self):
+        """登录操作"""
+        try:
+            # 切换验证码方式
+            wed.find_element(By.CLASS_NAME, 'changeImg').click()
+            time.sleep(2)
+
+            # 输入账号密码
+            inputs = wed.find_elements(By.TAG_NAME, 'input')
+            if len(inputs) >= 2:
+                inputs[0].send_keys(self.Zhanghao)
+                inputs[1].send_keys(self.Mima)
+                time.sleep(2)
+
+                # 点击登录按钮
+                wed.find_element(By.CSS_SELECTOR, '.submit-btn.login-btn.customMargin').click()
+            else:
+                print("未找到足够的输入框")
+        except Exception as e:
+            print(f"登录失败: {e}")
+
+    def wait_for_user_verification(self):
+        """等待用户手动完成安全验证"""
+        print("检测到安全验证，请手动完成验证码...")
+        input("完成验证码后请按回车继续...")
+
+    def Juxu(self):
+        """查找并点击第一个 activity-info 元素"""
+        try:
+            elements = WebDriverWait(wed, 10).until(
+                EC.presence_of_all_elements_located((By.CLASS_NAME, 'activity-info'))
+            )
+            for idx, element in enumerate(elements):
+                print(f"第 {idx + 1} 个元素内容: {element.text}")
+
+            if elements:
+                elements[0].click()
+                time.sleep(2)
+            else:
+                print("未找到任何 activity-info 元素")
+        except TimeoutException:
+            print("等待 activity-info 元素超时")
+
+    def play_video(self):
+        """查找视频并播放"""
+        try:
+            # 显式等待视频元素出现
+            video_element = WebDriverWait(wed, 15).until(
+                EC.presence_of_element_located((By.XPATH, '//video[contains(@class, "xt_video_player")]'))
+            )
+            print("✅ 成功找到视频元素")
+            
+            # 执行 JavaScript 控制播放
+            wed.execute_script("arguments[0].play()", video_element)
+            print("▶️ 视频正在播放...")
+
+        except TimeoutException:
+            print(" 超时：未找到视频元素，请检查是否在 iframe 或页面加载慢")
+            wed.save_screenshot('video_not_found.png')  # 可选：保存截图用于调试
+
+    def shipin_time(self):
+        while True:
+            try:
+                video_element = WebDriverWait(wed, 15).until(
+                EC.presence_of_element_located((By.XPATH, '//video[contains(@class, "xt_video_player")]'))
+)
+                duration = wed.execute_script("return arguments[0].duration", video_element)
+                print(f"当前播放时间: {duration} 秒")
+            except Exception as e:
+                print(e)
+                time.sleep(1)
+
+
+re_instance = Re_1()
+
+# 1. 登录
+re_instance.DENGLU()
+
+# 2. 等待用户手动完成验证码
+re_instance.wait_for_user_verification()
+
+# 3. 查找并点击课程项
+re_instance.Juxu()
+
+
+# 4. 查找并播放视频
+re_instance.play_video()
+re_instance.shipin_time
+
+time.sleep(5000)
+
+wed.quit()
