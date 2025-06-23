@@ -1,0 +1,47 @@
+import cv2 as cv
+import numpy as np
+
+# 读取原始图像
+image = cv.imread(r'C:\Users\wei\Desktop\opencv1\d7ee8703ecf97b51d0108ccb01964ae.jpg')
+print("原始图像尺寸:", image.shape)
+
+# 等比缩放
+width = 500
+height = int(image.shape[0] * width / image.shape[1])
+image = cv.resize(image, dsize=(width, height))
+
+# 灰度图 + 二值化
+gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+ret, thresh = cv.threshold(gray, 127, 255, cv.THRESH_BINARY)
+
+# 查找轮廓
+contours, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+
+# 排序并筛选最大轮廓
+if len(contours) > 0:
+    contours = sorted(contours, key=cv.contourArea, reverse=True)
+
+    screen = None
+    for c in contours[:5]:  # 只检查前5个最大的轮廓
+        peri = cv.arcLength(c, True)
+        approx = cv.approxPolyDP(c, 0.02 * peri, True)
+
+        print(f"当前轮廓点数: {len(approx)}")
+        if len(approx) == 4:
+            print("✅ 找到四边形")
+            screen = approx
+            break
+
+    # 如果找到四边形，绘制出来
+    if screen is not None:
+        cv.drawContours(image, [screen], -1, (0, 255, 0), 2)
+        cv.imshow("image", image)
+    else:
+        print("⚠️ 未找到四边形轮廓")
+else:
+    print("❌ 未检测到任何轮廓")
+
+# 等待按键关闭窗口
+key = cv.waitKey(0)
+if key == ord('d'):
+    cv.destroyAllWindows()
